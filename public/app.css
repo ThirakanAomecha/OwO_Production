@@ -1,0 +1,348 @@
+/* Basic Reset & Dark Theme */
+body {
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    scroll-behavior: smooth;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    color: #4CAF50; /* Accent color for headers */
+    margin-bottom: 20px;
+}
+
+a {
+    color: #4CAF50;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: #66ff6b;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 0;
+}
+
+section {
+    padding: 80px 20px;
+    border-bottom: 1px solid #333;
+}
+
+section:last-child {
+    border-bottom: none;
+}
+
+/* Header & Navbar */
+#main-header {
+    background-color: rgba(26, 26, 26, 0.9);
+    backdrop-filter: blur(10px);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 70px;
+    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+}
+
+.logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links li {
+    margin-left: 30px;
+}
+
+.nav-links a {
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 5px 0;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.3s;
+}
+
+.nav-links a:hover {
+    border-bottom-color: #66ff6b;
+}
+
+#user-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-pfp-nav {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #4CAF50;
+    cursor: pointer;
+}
+
+/* Dropdown container */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #2a2a2a;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+    color: #f0f0f0;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {
+    background-color: #4CAF50;
+    color: #1a1a1a;
+    border-bottom-color: transparent;
+}
+
+/* Show the dropdown menu (used with JavaScript) */
+.show {
+    display: block;
+}
+
+/* Hero Section */
+#home {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 100vh;
+    padding-top: 70px; /* Offset for fixed header */
+    background: linear-gradient(rgba(26, 26, 26, 0.7), rgba(26, 26, 26, 0.7)), url('https://via.placeholder.com/1920x1080.png?text=Game+Montage+Background') no-repeat center center/cover;
+}
+
+#home h1 {
+    font-size: 4rem;
+    margin-bottom: 10px;
+}
+
+.tagline {
+    font-size: 1.5rem;
+    color: #ccc;
+    margin-bottom: 30px;
+}
+
+/* Spotlight Section */
+.spotlight-content {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+.spotlight-image img {
+    max-width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
+.spotlight-text {
+    flex: 1;
+}
+
+/* Games Section */
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.game-card {
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.game-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 25px rgba(0,0,0,0.5);
+}
+
+.game-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.game-card h3 {
+    padding: 20px 20px 10px;
+    margin: 0;
+}
+
+.game-card p {
+    padding: 0 20px 20px;
+    margin: 0;
+    color: #ccc;
+}
+
+.subtle-text {
+    opacity: 0.3; /* User requested 50% */
+}
+
+/* About & Contact Sections */
+#about {
+    text-align: center; /* Center the text in the about section */
+    max-width: 900px;
+    margin: 0 auto; /* Ensure the section block is centered */
+}
+
+.about-content {
+    display: flex; /* Re-introduce flex container */
+    align-items: center;
+    gap: 50px;
+    justify-content: flex-start; /* Align photo stack to the left */
+}
+
+.photo-stack {
+    position: relative;
+    width: 230px; /* Increased size */
+    height: 230px; /* Increased size */
+    margin-bottom: 30px; /* Add space below */
+    flex-shrink: 0; /* Prevent shrinking */
+    /* Removed margin: 0 auto; to align left in flex container */
+}
+
+.photo-stack img {
+    width: 200px; /* Increased size */
+    height: 200px; /* Increased size */
+    border-radius: 8px;
+    border: 4px solid #333;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.pfp-1 {
+    z-index: 3;
+    transform: rotate(5deg);
+}
+
+.pfp-2 {
+    z-index: 2;
+    transform: rotate(-5deg) translate(15px, 15px); /* Adjusted for larger size */
+    filter: brightness(0.8);
+}
+
+.pfp-3 {
+    z-index: 1;
+    transform: rotate(10deg) translate(-15px, 25px); /* Adjusted for larger size */
+    filter: brightness(0.6);
+}
+
+.about-text {
+    flex: 1; /* Allow it to take up remaining space */
+    text-align: center; /* Center text within its block */
+}
+
+#contact {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Footer */
+#main-footer {
+    background-color: #111;
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 40px;
+}
+
+/* Button styles */
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #4CAF50;
+    color: #1a1a1a;
+    font-weight: bold;
+    border-radius: 5px;
+    transition: background-color 0.3s, transform 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+}
+
+.btn:hover {
+    background-color: #66ff6b;
+    color: #000;
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #home h1 {
+        font-size: 3rem;
+    }
+    .spotlight-content {
+        flex-direction: column;
+    }
+    .about-content {
+        flex-direction: column; /* Stack vertically on small screens */
+        align-items: center; /* Center items when stacked */
+        text-align: center;
+    }
+    .photo-stack {
+        margin-bottom: 30px;
+    }
+    .nav-links {
+        width: 100%; /* Take full width */
+        justify-content: center; /* Center links if they wrap */
+        margin-top: 10px; /* Add some space below logo */
+        display: flex; /* Ensure they are displayed */
+    }
+    .nav-links li {
+        margin: 0 10px; /* Adjust margin for small screens */
+    }
+    .navbar {
+        height: auto; /* Allow navbar to grow in height if items wrap */
+        padding-bottom: 10px; /* Add padding at the bottom when wrapped */
+    }
+}

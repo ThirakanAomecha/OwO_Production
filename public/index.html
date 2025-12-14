@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OwO Productions - Game Studio</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <script defer src="/__/firebase/12.6.0/firebase-app-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-auth-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-database-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-functions-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-messaging-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-storage-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-analytics-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-remote-config-compat.js"></script>
+    <script defer src="/__/firebase/12.6.0/firebase-performance-compat.js"></script>
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+    <header id="main-header">
+        <nav class="navbar container">
+            <a href="#home" class="logo">OwO Productions</a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#ten-k-wol">10KWoL</a></li>
+                <li><a href="#games">Games</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li id="login-btn"><a href="#" class="btn">Login</a></li>
+                <li id="user-profile" style="display: none;" class="dropdown">
+                    <img id="user-pfp" src="" alt="User PFP" class="user-pfp-nav">
+                    <div id="dropdown-menu" class="dropdown-content">
+                        <a href="#" id="scores-btn">Saves</a>
+                        <a href="#" id="donations-btn">Donate History</a>
+                        <a href="#" id="settings-btn">Settings</a>
+                        <a href="#" id="logout-btn">Logout</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="home" class="hero">
+            <div class="container">
+                <h1>Welcome to OwO Productions</h1>
+                <p class="tagline">Crafting unforgettable gaming experiences.</p>
+                <a href="#games" class="btn">Explore Our Games</a>
+            </div>
+        </section>
+
+        <section id="ten-k-wol">
+            <div class="container">
+                <h2>Spotlight: 10KWoL</h2>
+                <div class="spotlight-content">
+                    <div class="spotlight-image">
+                        <img src="https://via.placeholder.com/600x400.png?text=10KWoL+Gameplay" alt="10KWoL Gameplay Screenshot">
+                    </div>
+                    <div class="spotlight-text">
+                        <h3>Our Debut Title</h3>
+                        <p>
+                           “10K Worth of Love” (10KWoL) A clueless, heartbroken boy just lost the only girl who ever believed in him.</p>
+                            <p>Now he’s got 10 weeks, 10k baht, and zero real skills butttt still one mission:
+                            prove he’s finally growing up.</p>
+                            
+                            <p><strong>Time is tight.</strong></p>
+                            <p><strong>Every choice matters.</strong></p>
+                            <p><strong>Wasting a single day might cost everything.</strong></p>
+
+                            <p>Can he rise, or will the pressure break him?</p>
+                        
+                        <a href="game.html" class="btn">Play on Browser</a>
+                        <a href="mobile-game.html" class="btn">Play on Browser (Mobile Beta)</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="games">
+            <div class="container">
+                <h2>Our Games</h2>
+                <div class="game-grid">
+                    <div class="game-card">
+                        <img src="https://via.placeholder.com/400x300.png?text=Blutlicht" alt="Blutlicht">
+                        <h3>Blutlicht</h3>
+                        <p>Coming soon.</p>
+                    </div>
+                    <div class="game-card">
+                        <img src="https://via.placeholder.com/400x300.png?text=Everlight" alt="Everlight">
+                        <h3>Everlight</h3>
+                        <p>Coming soon.</p>
+                    </div>
+                    <div class="game-card">
+                        <img src="https://via.placeholder.com/400x300.png?text=10K+Worth+of+Love" alt="10K Worth of Love">
+                        <h3>10K Worth of Love</h3>
+                        <p>In development, Stay tune!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about">
+            <div class="container about-content">
+                <div class="photo-stack">
+                    <img src="Pics/Me/FB_IMG_1725207069744-1.jpg" alt="Thirakan Aomecha" class="pfp-1">
+                    <img src="Pics/Me/IMG_20241125_150935.jpg" alt="Photo behind" class="pfp-2">
+                    <img src="Pics/Me/Snapchat-1592209809.jpg" alt="Another photo behind" class="pfp-3">
+                </div>
+                <div class="about-text">
+                    <h2>About OwO Productions</h2>
+                    <p>
+                        Greetings! I'm Thirakan Aomecha, Founder and CEO of OwO Productions.
+                        I'm going to graduating from Vocational school and 18 years old.
+                        Might as well to... </p>
+                        <p><strong> something BIG, planning BIG. Do it BIG.</strong></p>
+                        <p class="subtle-text"><a href="https://www.youtube.com">wannna see the reason?</a></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <div class="container">
+                <h2>Get In Touch</h2>
+                <p>Have questions or want to collaborate? Reach out to us!</p>
+                <a href="mailto:owo.productions.official.th@gmail.com" class="btn">owo.productions.official.th@gmail.com</a>
+                <p class="subtle-text">“Don’t laugh. I tried making it without ‘.official’ and ‘.th,’ but it was already taken!”</p>
+            </div>
+        </section>
+    </main>
+
+    <footer id="main-footer">
+        <div class="container">
+            <p>&copy; 2025 OwO Productions. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
