@@ -316,6 +316,16 @@ section:last-child {
     transform: translateY(-2px);
 }
 
+.github-btn {
+    background-color: #333;
+    color: #f0f0f0;
+}
+
+.github-btn:hover {
+    background-color: #555;
+    color: #f0f0f0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     #home h1 {

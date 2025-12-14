@@ -8,6 +8,9 @@
  */
 
 const {setGlobalOptions} = require("firebase-functions");
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+admin.initializeApp();
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -23,6 +26,28 @@ setGlobalOptions({maxInstances: 10});
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
+
+exports.createUserDocument = functions.auth.user().onCreate(async (user) => {
+  const db = admin.firestore();
+  const userRef = db.collection("users").doc(user.uid);
+
+  const newUser = {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    // Add any other default user data here
+  };
+
+  try {
+    await userRef.set(newUser, { merge: true }); // Use merge to avoid overwriting existing data if function is re-triggered
+    console.log(`User document created for ${user.uid}`);
+  } catch (error) {
+    console.error(`Error creating user document for ${user.uid}:`, error);
+  }
+});
+
 
 // exports.helloWorld = onRequest((request, response) => {
 //   logger.info("Hello logs!", {structuredData: true});

@@ -81,39 +81,105 @@ document.addEventListener('DOMContentLoaded', () => {
     let p1JoystickY = 0;
     let p2JoystickY = 0;
 
-    joystickP1.on('move', (evt, data) => {
-        if (data.angle.degree > 225 && data.angle.degree < 315) { // Up
-            p1JoystickY = -data.distance / 50; // Normalize and scale
-        } else if (data.angle.degree > 45 && data.angle.degree < 135) { // Down
-            p1JoystickY = data.distance / 50; // Normalize and scale
-        } else {
-            p1JoystickY = 0;
-        }
-    }).on('end', () => {
-        p1JoystickY = 0;
-    });
+    // Game state
+    let gamePaused = false;
+    let ballServed = false;
+    let gameInterval; // To control game loop
 
-    joystickP2.on('move', (evt, data) => {
-        if (data.angle.degree > 225 && data.angle.degree < 315) { // Up
-            p2JoystickY = -data.distance / 50; // Normalize and scale
-        } else if (data.angle.degree > 45 && data.angle.degree < 135) { // Down
-            p2JoystickY = data.distance / 50; // Normalize and scale
-        } else {
-            p2JoystickY = 0;
-        }
-    }).on('end', () => {
-        p2JoystickY = 0;
-    });
+    // Button elements
+    const btnA = document.getElementById('btn-a');
+    const btnB = document.getElementById('btn-b');
+    const btnX = document.getElementById('btn-x');
+    const btnY = document.getElementById('btn-y');
 
+    // Power-up settings
+    const POWER_UP_DURATION = 3000; // 3 seconds
+    const PADDLE_GROWTH = 50; // How much paddle grows
+
+    let p1PowerUpActive = false;
+    let p2PowerUpActive = false;
+    let p1PowerUpTimeout;
+    let p2PowerUpTimeout;
+
+    // Event listeners for action buttons
+    btnA.addEventListener('touchstart', (e) => { e.preventDefault(); togglePause(); });
+    btnB.addEventListener('touchstart', (e) => { e.preventDefault(); resetGame(); });
+    btnX.addEventListener('touchstart', (e) => { e.preventDefault(); activatePowerUp(player); });
+    btnY.addEventListener('touchstart', (e) => { e.preventDefault(); activatePowerUp(opponent); });
+
+    function togglePause() {
+        gamePaused = !gamePaused;
+        if (!gamePaused) {
+            gameLoop(); // Resume game loop
+        }
+    }
+
+    function resetGame() {
+        player.score = 0;
+        opponent.score = 0;
+        player.y = gameHeight / 2 - paddleHeight / 2;
+        opponent.y = gameHeight / 2 - paddleHeight / 2;
+        resetBall();
+        gamePaused = true; // Pause game until 'A' is pressed to start
+        ballServed = false;
+
+        // Clear any active power-ups
+        if (p1PowerUpActive) {
+            clearTimeout(p1PowerUpTimeout);
+            player.height = paddleHeight;
+            p1PowerUpActive = false;
+        }
+        if (p2PowerUpActive) {
+            clearTimeout(p2PowerUpTimeout);
+            opponent.height = paddleHeight;
+            p2PowerUpActive = false;
+        }
+        draw(); // Redraw immediately after reset
+    }
+
+    function activatePowerUp(targetPaddle) {
+        if (targetPaddle === player && !p1PowerUpActive) {
+            player.height += PADDLE_GROWTH;
+            p1PowerUpActive = true;
+            p1PowerUpTimeout = setTimeout(() => {
+                player.height = paddleHeight;
+                p1PowerUpActive = false;
+            }, POWER_UP_DURATION);
+        } else if (targetPaddle === opponent && !p2PowerUpActive) {
+            opponent.height += PADDLE_GROWTH;
+            p2PowerUpActive = true;
+            p2PowerUpTimeout = setTimeout(() => {
+                opponent.height = paddleHeight;
+                p2PowerUpActive = false;
+            }, POWER_UP_DURATION);
+        }
+    }
 
     // --- Game Logic ---
     function update() {
-        // Player 1 Movement (Keyboard OR Mobile)
-        if (keys.w || p1JoystickY < 0) {
-            player.y += player.speed * (p1JoystickY || -1);
+        if (gamePaused) {
+            return;
         }
-        if (keys.s || p1JoystickY > 0) {
-            player.y += player.speed * (p1JoystickY || 1);
+
+        // Serve ball if not served yet (only after a score or game start)
+        if (!ballServed) {
+            ball.dx = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
+            ball.dy = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
+            ballServed = true;
+        }
+
+        // Player 1 Movement (Keyboard OR Mobile)
+        if (keys.w && player.y > 0) {
+            player.y -= player.speed;
+        }
+        if (keys.s && player.y < gameHeight - player.height) {
+            player.y += player.speed;
+        }
+        if (p1JoystickY < 0 && player.y > 0) {
+            player.y += player.speed * p1JoystickY;
+        }
+        if (p1JoystickY > 0 && player.y < gameHeight - player.height) {
+            player.y += player.speed * p1JoystickY;
         }
 
         // Clamp player position
@@ -121,11 +187,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (player.y > gameHeight - player.height) player.y = gameHeight - player.height;
 
         // Player 2 Movement (Keyboard OR Mobile)
-        if (keys.ArrowUp || p2JoystickY < 0) {
-            opponent.y += opponent.speed * (p2JoystickY || -1);
+        if (keys.ArrowUp && opponent.y > 0) {
+            opponent.y -= opponent.speed;
         }
-        if (keys.ArrowDown || p2JoystickY > 0) {
-            opponent.y += opponent.speed * (p2JoystickY || 1);
+        if (keys.ArrowDown && opponent.y < gameHeight - opponent.height) {
+            opponent.y += opponent.speed;
+        }
+        if (p2JoystickY < 0 && opponent.y > 0) {
+            opponent.y += opponent.speed * p2JoystickY;
+        }
+        if (p2JoystickY > 0 && opponent.y < gameHeight - opponent.height) {
+            opponent.y += opponent.speed * p2JoystickY;
         }
 
         // Clamp opponent position
@@ -149,18 +221,23 @@ document.addEventListener('DOMContentLoaded', () => {
             opponent.score++;
             // saveScore(currentUser, player.score, opponent.score);
             resetBall();
+            gamePaused = true; // Pause after score
+            ballServed = false;
         }
         if (ball.x > gameWidth) {
             player.score++;
             // saveScore(currentUser, player.score, opponent.score);
             resetBall();
+            gamePaused = true; // Pause after score
+            ballServed = false;
         }
     }
 
     function resetBall() {
         ball.x = gameWidth / 2;
         ball.y = gameHeight / 2;
-        ball.dx *= -1;
+        ball.dx = 0; // Stop ball until served
+        ball.dy = 0; // Stop ball until served
     }
 
     // async function saveScore(user, playerScore, opponentScore) {

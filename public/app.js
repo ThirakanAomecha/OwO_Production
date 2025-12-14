@@ -45,9 +45,11 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
         const auth = firebase.auth();
         const db = firebase.firestore(); // Initialize Firestore
-        const provider = new firebase.auth.GoogleAuthProvider();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+        const githubProvider = new firebase.auth.GithubAuthProvider();
 
         const loginBtn = document.getElementById('login-btn');
+        const githubLoginBtn = document.getElementById('github-login-btn');
         const logoutBtn = document.getElementById('logout-btn');
         const userProfileNav = document.getElementById('user-profile');
         const userPfpNav = document.getElementById('user-pfp');
@@ -78,11 +80,19 @@ document.addEventListener('DOMContentLoaded', function() {
         donationsBtn.addEventListener('click', (e) => { e.preventDefault(); alert('Donation history page coming soon!'); });
         settingsBtn.addEventListener('click', (e) => { e.preventDefault(); alert('Settings page coming soon!'); });
 
-        // Login
+        // Login with Google
         loginBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            auth.signInWithPopup(provider).catch(error => {
-                console.error("Error during sign-in:", error);
+            auth.signInWithPopup(googleProvider).catch(error => {
+                console.error("Error during Google sign-in:", error);
+            });
+        });
+
+        // Login with GitHub
+        githubLoginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            auth.signInWithPopup(githubProvider).catch(error => {
+                console.error("Error during GitHub sign-in:", error);
             });
         });
 
@@ -99,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (user) {
                 // User is signed in
                 loginBtn.style.display = 'none';
+                githubLoginBtn.style.display = 'none'; // Hide GitHub login button too
                 userProfileNav.style.display = 'flex'; // Correct display property
                 
                 const photoURL = user.photoURL ? user.photoURL.replace('s96-c', 's400-c') : 'https://via.placeholder.com/200';
@@ -106,6 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // User is signed out
                 loginBtn.style.display = 'list-item';
+                githubLoginBtn.style.display = 'list-item'; // Show GitHub login button
                 userProfileNav.style.display = 'none';
                 userPfpNav.src = '';
             }
