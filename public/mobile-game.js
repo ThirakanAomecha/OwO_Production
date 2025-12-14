@@ -1,273 +1,317 @@
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('version-display').textContent = 'v1.2';
-
-    const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d');
-    const fullscreenBtn = document.getElementById('fullscreen-btn');
-
-    // --- Firebase and User ---
-    let db;
-    let currentUser = null;
-    // try {
-    //     db = firebase.firestore();
-    //     firebase.auth().onAuthStateChanged(user => {
-    //         currentUser = user;
-    //         console.log("Current user:", currentUser ? currentUser.uid : "None");
-    //     });
-    // } catch (e) {
-    //     console.error("Firebase not initialized, score saving will be disabled.", e);
-    // }
-
-    // --- Canvas and Game Setup ---
-    const gameWidth = 800;
-    const gameHeight = 600;
-    canvas.width = gameWidth;
-    canvas.height = gameHeight;
-
-    // --- Game Objects ---
-    const paddleWidth = 10;
-    const paddleHeight = 100;
-    const ballSize = 10;
-
-    const player = {
-        x: 10,
-        y: gameHeight / 2 - paddleHeight / 2,
-        width: paddleWidth,
-        height: paddleHeight,
-        score: 0,
-        speed: 7
-    };
-
-    const opponent = {
-        x: gameWidth - paddleWidth - 10,
-        y: gameHeight / 2 - paddleHeight / 2,
-        width: paddleWidth,
-        height: paddleHeight,
-        score: 0,
-        speed: 7
-    };
-
-    const ball = {
-        x: gameWidth / 2,
-        y: gameHeight / 2,
-        size: ballSize,
-        speed: 5,
-        dx: 5,
-        dy: 5
-    };
-
-    // --- Input Handling ---
-    const keys = { w: false, s: false, ArrowUp: false, ArrowDown: false };
-    const mobileControlsState = { p1Up: false, p1Down: false, p2Up: false, p2Down: false };
-
-    document.addEventListener('keydown', e => { if (e.key in keys) keys[e.key] = true; });
-    document.addEventListener('keyup', e => { if (e.key in keys) keys[e.key] = false; });
-
-    // --- NippleJS Joystick Setup ---
-    const joystickP1 = nipplejs.create({
-        zone: document.getElementById('joystick-container-p1'),
-        mode: 'static',
-        position: { left: '25%', top: '50%' },
-        color: 'white'
-    });
-
-    let p1JoystickY = 0;
-
-    // Game state
-    let gamePaused = false;
-    let ballServed = false;
-    let gameInterval; // To control game loop
-
-    // Button elements
-    const btnA = document.getElementById('btn-a');
-    const btnB = document.getElementById('btn-b');
-    const btnX = document.getElementById('btn-x');
-    const btnY = document.getElementById('btn-y');
-
-    // Power-up settings
+    // --- Game Configuration ---
+    const GAME_WIDTH = 800;
+    const GAME_HEIGHT = 600;
+    const PADDLE_WIDTH = 10;
+    const PADDLE_HEIGHT = 100;
+    const BALL_SIZE = 10;
+    const PADDLE_SPEED = 7;
+    const BALL_INITIAL_SPEED = 5;
     const POWER_UP_DURATION = 3000; // 3 seconds
     const PADDLE_GROWTH = 50; // How much paddle grows
 
-    let p1PowerUpActive = false;
-    let p2PowerUpActive = false;
-    let p1PowerUpTimeout;
-    let p2PowerUpTimeout;
+    // --- Paddle Class ---
+    class Paddle {
+        constructor(x, y, width, height, speed) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.initialHeight = height;
+            this.speed = speed;
+            this.score = 0;
+            this.powerUpActive = false;
+            this.powerUpTimeout = null;
+        }
 
-    // Event listeners for action buttons
-    btnA.addEventListener('touchstart', (e) => { e.preventDefault(); togglePause(); });
-    btnB.addEventListener('touchstart', (e) => { e.preventDefault(); resetGame(); });
-    btnX.addEventListener('touchstart', (e) => { e.preventDefault(); activatePowerUp(player); });
-    btnY.addEventListener('touchstart', (e) => { e.preventDefault(); activatePowerUp(opponent); });
+        update(gameHeight) {
+            // Paddle movement handled by input directly
+            // Clamp paddle position
+            if (this.y < 0) this.y = 0;
+            if (this.y > gameHeight - this.height) this.y = gameHeight - this.height;
+        }
 
-    function togglePause() {
-        gamePaused = !gamePaused;
+        draw(ctx) {
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+
+        moveUp(delta) {
+            this.y -= this.speed * delta;
+        }
+
+        moveDown(delta) {
+            this.y += this.speed * delta;
+        }
+
+        activatePowerUp() {
+            if (!this.powerUpActive) {
+                this.height += PADDLE_GROWTH;
+                this.powerUpActive = true;
+                if (this.powerUpTimeout) clearTimeout(this.powerUpTimeout);
+                this.powerUpTimeout = setTimeout(() => {
+                    this.height = this.initialHeight;
+                    this.powerUpActive = false;
+                }, POWER_UP_DURATION);
+            }
+        }
+
+        reset() {
+            this.y = GAME_HEIGHT / 2 - this.initialHeight / 2;
+            this.score = 0;
+            if (this.powerUpActive) {
+                clearTimeout(this.powerUpTimeout);
+                this.height = this.initialHeight;
+                this.powerUpActive = false;
+            }
+        }
     }
 
-    function resetGame() {
-        player.score = 0;
-        opponent.score = 0;
-        player.y = gameHeight / 2 - paddleHeight / 2;
-        opponent.y = gameHeight / 2 - paddleHeight / 2;
-        resetBall();
-        gamePaused = true; // Pause game until 'A' is pressed to start
-        ballServed = false;
-
-        // Clear any active power-ups
-        if (p1PowerUpActive) {
-            clearTimeout(p1PowerUpTimeout);
-            player.height = paddleHeight;
-            p1PowerUpActive = false;
+    // --- Ball Class ---
+    class Ball {
+        constructor(x, y, size, speed) {
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.initialSpeed = speed;
+            this.speed = speed;
+            this.dx = 0; // Initial state: not moving
+            this.dy = 0; // Initial state: not moving
         }
-        if (p2PowerUpActive) {
-            clearTimeout(p2PowerUpTimeout);
-            opponent.height = paddleHeight;
-            p2PowerUpActive = false;
-        }
-        draw(); // Redraw immediately after reset
-    }
 
-    function activatePowerUp(targetPaddle) {
-        if (targetPaddle === player && !p1PowerUpActive) {
-            player.height += PADDLE_GROWTH;
-            p1PowerUpActive = true;
-            p1PowerUpTimeout = setTimeout(() => {
-                player.height = paddleHeight;
-                p1PowerUpActive = false;
-            }, POWER_UP_DURATION);
-        } else if (targetPaddle === opponent && !p2PowerUpActive) {
-            opponent.height += PADDLE_GROWTH;
-            p2PowerUpActive = true;
-            p2PowerUpTimeout = setTimeout(() => {
-                opponent.height = paddleHeight;
-                p2PowerUpActive = false;
-            }, POWER_UP_DURATION);
+        update() {
+            this.x += this.dx;
+            this.y += this.dy;
+        }
+
+        draw(ctx) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        reset(serve = false) {
+            this.x = GAME_WIDTH / 2;
+            this.y = GAME_HEIGHT / 2;
+            this.dx = 0;
+            this.dy = 0;
+            if (serve) {
+                this.dx = (Math.random() > 0.5 ? 1 : -1) * this.speed;
+                this.dy = (Math.random() > 0.5 ? 1 : -1) * this.speed;
+            }
         }
     }
 
-    // --- Game Logic ---
-    function update() {
-        if (!gamePaused) {
-            // Serve ball if not served yet (only after a score or game start)
-            if (!ballServed) {
-                ball.dx = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
-                ball.dy = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
-                ballServed = true;
+    // --- Game Class ---
+    class PongGame {
+        constructor(canvasId) {
+            this.canvas = document.getElementById(canvasId);
+            this.ctx = this.canvas.getContext('2d');
+            this.canvas.width = GAME_WIDTH;
+            this.canvas.height = GAME_HEIGHT;
+
+            this.playerPaddle = new Paddle(10, GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_SPEED);
+            this.opponentPaddle = new Paddle(GAME_WIDTH - PADDLE_WIDTH - 10, GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_SPEED);
+            this.ball = new Ball(GAME_WIDTH / 2, GAME_HEIGHT / 2, BALL_SIZE, BALL_INITIAL_SPEED);
+
+            this.gamePaused = true;
+            this.ballServed = false;
+
+            this.p1JoystickY = 0;
+
+            this.lastFrameTime = 0;
+
+            this.initInputHandlers();
+            this.initMobileControls();
+            this.resetGame(); // Set initial state
+            this.gameLoop();
+        }
+
+        initInputHandlers() {
+            // Keyboard Input (for Player 1 desktop testing)
+            const keys = { w: false, s: false };
+            document.addEventListener('keydown', e => { if (e.key in keys) keys[e.key] = true; });
+            document.addEventListener('keyup', e => { if (e.key in keys) keys[e.key] = false; });
+
+            this.keys = keys; // Store keys state in game instance
+        }
+
+        initMobileControls() {
+            // NippleJS Joystick Setup for Player 1
+            const joystickP1 = nipplejs.create({
+                zone: document.getElementById('joystick-container-p1'),
+                mode: 'static',
+                position: { left: '25%', top: '50%' },
+                color: 'white'
+            });
+
+            joystickP1.on('move', (evt, data) => {
+                if (data.angle.degree > 225 && data.angle.degree < 315) { // Up
+                    this.p1JoystickY = -data.distance / 50; // Normalize and scale
+                } else if (data.angle.degree > 45 && data.angle.degree < 135) { // Down
+                    this.p1JoystickY = data.distance / 50; // Normalize and scale
+                } else {
+                    this.p1JoystickY = 0;
+                }
+            }).on('end', () => {
+                this.p1JoystickY = 0;
+            });
+
+            // Action Buttons
+            document.getElementById('btn-a').addEventListener('touchstart', (e) => { e.preventDefault(); this.togglePause(); });
+            document.getElementById('btn-b').addEventListener('touchstart', (e) => { e.preventDefault(); this.resetGame(); });
+            document.getElementById('btn-x').addEventListener('touchstart', (e) => { e.preventDefault(); this.playerPaddle.activatePowerUp(); });
+            document.getElementById('btn-y').addEventListener('touchstart', (e) => { e.preventDefault(); this.opponentPaddle.activatePowerUp(); });
+
+            // Fullscreen Button
+            document.getElementById('fullscreen-btn').addEventListener('click', () => {
+                const gameContainer = document.getElementById('game-and-controls-container');
+                if (!document.fullscreenElement) {
+                    gameContainer.requestFullscreen().catch(err => alert(`Error: ${err.message}`));
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+
+            document.getElementById('version-display').textContent = 'v2.0'; // Updated version
+        }
+
+        togglePause() {
+            this.gamePaused = !this.gamePaused;
+            if (!this.gamePaused && !this.ballServed) {
+                // If unpausing and ball hasn't been served yet (e.g., at game start or after a score)
+                this.ball.reset(true); // Serve the ball
+                this.ballServed = true;
+            }
+        }
+
+        resetGame() {
+            this.playerPaddle.reset();
+            this.opponentPaddle.reset();
+            this.ball.reset();
+            this.gamePaused = true;
+            this.ballServed = false;
+            this.draw(); // Draw initial state immediately
+        }
+
+        update(deltaTime) {
+            if (this.gamePaused) {
+                return;
             }
 
-            // Player 1 Movement (Keyboard OR Mobile)
-            if (keys.w && player.y > 0) {
-                player.y -= player.speed;
+            // Player 1 Movement (Keyboard OR Mobile Joystick)
+            if (this.keys.w) {
+                this.playerPaddle.moveUp(deltaTime);
             }
-            if (keys.s && player.y < gameHeight - player.height) {
-                player.y += player.speed;
+            if (this.keys.s) {
+                this.playerPaddle.moveDown(deltaTime);
             }
-            if (p1JoystickY < 0 && player.y > 0) {
-                player.y += player.speed * p1JoystickY;
+            if (this.p1JoystickY < 0) {
+                this.playerPaddle.moveUp(deltaTime * -this.p1JoystickY);
             }
-            if (p1JoystickY > 0 && player.y < gameHeight - player.height) {
-                player.y += player.speed * p1JoystickY;
+            if (this.p1JoystickY > 0) {
+                this.playerPaddle.moveDown(deltaTime * this.p1JoystickY);
+            }
+            this.playerPaddle.update(GAME_HEIGHT);
+
+            // Opponent (Player 2) is stationary
+            this.opponentPaddle.update(GAME_HEIGHT);
+
+            this.ball.update();
+
+            // Ball collision with top/bottom walls
+            if (this.ball.y + this.ball.size / 2 > GAME_HEIGHT || this.ball.y - this.ball.size / 2 < 0) {
+                this.ball.dy *= -1;
             }
 
-            // Clamp player position
-            if (player.y < 0) player.y = 0;
-            if (player.y > gameHeight - player.height) player.y = gameHeight - player.height;
-
-            // Player 2 is stationary, remove movement logic
-            // Clamp opponent position
-            if (opponent.y < 0) opponent.y = 0;
-            if (opponent.y > gameHeight - opponent.height) opponent.y = gameHeight - opponent.height;
-
-
-            ball.x += ball.dx;
-            ball.y += ball.dy;
-
-            if (ball.y + ball.size > gameHeight || ball.y < 0) ball.dy *= -1;
-
+            // Ball collision with paddles
+            // Player Paddle
             if (
-                (ball.dx < 0 && ball.x < player.x + player.width && ball.y > player.y && ball.y < player.y + player.height) ||
-                (ball.dx > 0 && ball.x + ball.size > opponent.x && ball.y > opponent.y && ball.y < opponent.y + opponent.height)
+                this.ball.dx < 0 &&
+                this.ball.x - this.ball.size / 2 < this.playerPaddle.x + this.playerPaddle.width &&
+                this.ball.y + this.ball.size / 2 > this.playerPaddle.y &&
+                this.ball.y - this.ball.size / 2 < this.playerPaddle.y + this.playerPaddle.height
             ) {
-                ball.dx *= -1;
+                this.ball.dx *= -1;
+                // Add some randomness to reflect angle
+                this.ball.dy = ((this.ball.y - (this.playerPaddle.y + this.playerPaddle.height / 2)) / (this.playerPaddle.height / 2)) * this.ball.speed;
+            }
+            // Opponent Paddle
+            else if (
+                this.ball.dx > 0 &&
+                this.ball.x + this.ball.size / 2 > this.opponentPaddle.x &&
+                this.ball.y + this.ball.size / 2 > this.opponentPaddle.y &&
+                this.ball.y - this.ball.size / 2 < this.opponentPaddle.y + this.opponentPaddle.height
+            ) {
+                this.ball.dx *= -1;
+                // Add some randomness to reflect angle
+                this.ball.dy = ((this.ball.y - (this.opponentPaddle.y + this.opponentPaddle.height / 2)) / (this.opponentPaddle.height / 2)) * this.ball.speed;
             }
 
-            if (ball.x + ball.size < 0) {
-                opponent.score++;
-                // saveScore(currentUser, player.score, opponent.score);
-                resetBall();
-                gamePaused = true; // Pause after score
-                ballServed = false;
+            // Scoring
+            if (this.ball.x - this.ball.size / 2 < 0) { // Opponent scores
+                this.opponentPaddle.score++;
+                this.resetBallAfterScore();
+            } else if (this.ball.x + this.ball.size / 2 > GAME_WIDTH) { // Player scores
+                this.playerPaddle.score++;
+                this.resetBallAfterScore();
             }
-            if (ball.x > gameWidth) {
-                player.score++;
-                // saveScore(currentUser, player.score, opponent.score);
-                resetBall();
-                gamePaused = true; // Pause after score
-                ballServed = false;
+        }
+
+        resetBallAfterScore() {
+            this.ball.reset(false); // Reset ball position, but don't serve immediately
+            this.gamePaused = true;
+            this.ballServed = false;
+            // Optionally, save score here
+        }
+
+        draw() {
+            this.ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            this.ctx.fillStyle = '#1a1a1a';
+            this.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            this.ctx.fillStyle = '#f0f0f0';
+            this.playerPaddle.draw(this.ctx);
+            this.opponentPaddle.draw(this.ctx);
+            this.ball.draw(this.ctx);
+
+            this.ctx.font = '40px "Orbitron", sans-serif';
+            this.ctx.fillText(this.playerPaddle.score, GAME_WIDTH / 4, 50);
+            this.ctx.fillText(this.opponentPaddle.score, (GAME_WIDTH / 4) * 3, 50);
+
+            // Draw dashed line
+            this.ctx.setLineDash([10, 10]);
+            this.ctx.beginPath();
+            this.ctx.moveTo(GAME_WIDTH / 2, 0);
+            this.ctx.lineTo(GAME_WIDTH / 2, GAME_HEIGHT);
+            this.ctx.strokeStyle = '#f0f0f0';
+            this.ctx.stroke();
+
+            if (this.gamePaused) {
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+                this.ctx.fillStyle = '#f0f0f0';
+                this.ctx.font = '50px "Orbitron", sans-serif';
+                this.ctx.textAlign = 'center';
+                if (!this.ballServed) {
+                    this.ctx.fillText('Press A to Start', GAME_WIDTH / 2, GAME_HEIGHT / 2);
+                } else {
+                    this.ctx.fillText('Paused', GAME_WIDTH / 2, GAME_HEIGHT / 2);
+                }
+                this.ctx.textAlign = 'start';
             }
+        }
+
+        gameLoop(currentTime) {
+            const deltaTime = (currentTime - this.lastFrameTime) / 1000; // in seconds
+            this.lastFrameTime = currentTime;
+
+            this.update(deltaTime);
+            this.draw();
+
+            requestAnimationFrame(this.gameLoop.bind(this));
         }
     }
 
-    function resetBall() {
-        ball.x = gameWidth / 2;
-        ball.y = gameHeight / 2;
-        ball.dx = 0; // Stop ball until served
-        ball.dy = 0; // Stop ball until served
-    }
-
-    // async function saveScore(user, playerScore, opponentScore) {
-    //     if (user && db) {
-    //         try {
-    //             await db.collection('scores').add({
-    //                 userId: user.uid,
-    //                 userName: user.displayName,
-    //                 playerScore: playerScore,
-    //                 opponentScore: opponentScore,
-    //                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    //             });
-    //             console.log("Score saved successfully!");
-    //         } catch (error) {
-    //             console.error("Error saving score: ", error);
-    //         }
-    //     }
-    // }
-
-    function draw() {
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(0, 0, gameWidth, gameHeight);
-        ctx.fillStyle = '#f0f0f0';
-        ctx.fillRect(player.x, player.y, player.width, player.height);
-        ctx.fillRect(opponent.x, opponent.y, opponent.width, opponent.height);
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, ball.size / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.font = '40px "Orbitron", sans-serif';
-        ctx.fillText(player.score, gameWidth / 4, 50);
-        ctx.fillText(opponent.score, (gameWidth / 4) * 3, 50);
-        ctx.setLineDash([10, 10]);
-        ctx.beginPath();
-        ctx.moveTo(gameWidth / 2, 0);
-        ctx.lineTo(gameWidth / 2, gameHeight);
-        ctx.strokeStyle = '#f0f0f0';
-        ctx.stroke();
-    }
-
-    function gameLoop() {
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
-    }
-
-    fullscreenBtn.addEventListener('click', () => {
-        const gameContainer = document.getElementById('game-and-controls-container');
-        if (!document.fullscreenElement) {
-            gameContainer.requestFullscreen().catch(err => alert(`Error: ${err.message}`));
-        } else {
-            document.exitFullscreen();
-        }
-    });
-
-    // Initial draw
-    draw();
-    // Start game loop
-    gameLoop();
+    // --- Initialize the Game ---
+    const game = new PongGame('game-canvas');
 });
