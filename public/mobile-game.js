@@ -71,15 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         color: 'white'
     });
 
-    const joystickP2 = nipplejs.create({
-        zone: document.getElementById('joystick-container-p2'),
-        mode: 'static',
-        position: { right: '25%', top: '50%' },
-        color: 'white'
-    });
-
     let p1JoystickY = 0;
-    let p2JoystickY = 0;
 
     // Game state
     let gamePaused = false;
@@ -180,20 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (player.y < 0) player.y = 0;
             if (player.y > gameHeight - player.height) player.y = gameHeight - player.height;
 
-            // Player 2 Movement (Keyboard OR Mobile)
-            if (keys.ArrowUp && opponent.y > 0) {
-                opponent.y -= opponent.speed;
-            }
-            if (keys.ArrowDown && opponent.y < gameHeight - opponent.height) {
-                opponent.y += opponent.speed;
-            }
-            if (p2JoystickY < 0 && opponent.y > 0) {
-                opponent.y += opponent.speed * p2JoystickY;
-            }
-            if (p2JoystickY > 0 && opponent.y < gameHeight - opponent.height) {
-                opponent.y += opponent.speed * p2JoystickY;
-            }
-
+            // Player 2 is stationary, remove movement logic
             // Clamp opponent position
             if (opponent.y < 0) opponent.y = 0;
             if (opponent.y > gameHeight - opponent.height) opponent.y = gameHeight - opponent.height;
