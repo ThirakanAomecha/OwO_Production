@@ -109,9 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function togglePause() {
         gamePaused = !gamePaused;
-        if (!gamePaused) {
-            gameLoop(); // Resume game loop
-        }
     }
 
     function resetGame() {
@@ -157,79 +154,77 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Game Logic ---
     function update() {
-        if (gamePaused) {
-            return;
-        }
+        if (!gamePaused) {
+            // Serve ball if not served yet (only after a score or game start)
+            if (!ballServed) {
+                ball.dx = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
+                ball.dy = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
+                ballServed = true;
+            }
 
-        // Serve ball if not served yet (only after a score or game start)
-        if (!ballServed) {
-            ball.dx = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
-            ball.dy = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
-            ballServed = true;
-        }
+            // Player 1 Movement (Keyboard OR Mobile)
+            if (keys.w && player.y > 0) {
+                player.y -= player.speed;
+            }
+            if (keys.s && player.y < gameHeight - player.height) {
+                player.y += player.speed;
+            }
+            if (p1JoystickY < 0 && player.y > 0) {
+                player.y += player.speed * p1JoystickY;
+            }
+            if (p1JoystickY > 0 && player.y < gameHeight - player.height) {
+                player.y += player.speed * p1JoystickY;
+            }
 
-        // Player 1 Movement (Keyboard OR Mobile)
-        if (keys.w && player.y > 0) {
-            player.y -= player.speed;
-        }
-        if (keys.s && player.y < gameHeight - player.height) {
-            player.y += player.speed;
-        }
-        if (p1JoystickY < 0 && player.y > 0) {
-            player.y += player.speed * p1JoystickY;
-        }
-        if (p1JoystickY > 0 && player.y < gameHeight - player.height) {
-            player.y += player.speed * p1JoystickY;
-        }
+            // Clamp player position
+            if (player.y < 0) player.y = 0;
+            if (player.y > gameHeight - player.height) player.y = gameHeight - player.height;
 
-        // Clamp player position
-        if (player.y < 0) player.y = 0;
-        if (player.y > gameHeight - player.height) player.y = gameHeight - player.height;
+            // Player 2 Movement (Keyboard OR Mobile)
+            if (keys.ArrowUp && opponent.y > 0) {
+                opponent.y -= opponent.speed;
+            }
+            if (keys.ArrowDown && opponent.y < gameHeight - opponent.height) {
+                opponent.y += opponent.speed;
+            }
+            if (p2JoystickY < 0 && opponent.y > 0) {
+                opponent.y += opponent.speed * p2JoystickY;
+            }
+            if (p2JoystickY > 0 && opponent.y < gameHeight - opponent.height) {
+                opponent.y += opponent.speed * p2JoystickY;
+            }
 
-        // Player 2 Movement (Keyboard OR Mobile)
-        if (keys.ArrowUp && opponent.y > 0) {
-            opponent.y -= opponent.speed;
-        }
-        if (keys.ArrowDown && opponent.y < gameHeight - opponent.height) {
-            opponent.y += opponent.speed;
-        }
-        if (p2JoystickY < 0 && opponent.y > 0) {
-            opponent.y += opponent.speed * p2JoystickY;
-        }
-        if (p2JoystickY > 0 && opponent.y < gameHeight - opponent.height) {
-            opponent.y += opponent.speed * p2JoystickY;
-        }
-
-        // Clamp opponent position
-        if (opponent.y < 0) opponent.y = 0;
-        if (opponent.y > gameHeight - opponent.height) opponent.y = gameHeight - opponent.height;
+            // Clamp opponent position
+            if (opponent.y < 0) opponent.y = 0;
+            if (opponent.y > gameHeight - opponent.height) opponent.y = gameHeight - opponent.height;
 
 
-        ball.x += ball.dx;
-        ball.y += ball.dy;
+            ball.x += ball.dx;
+            ball.y += ball.dy;
 
-        if (ball.y + ball.size > gameHeight || ball.y < 0) ball.dy *= -1;
+            if (ball.y + ball.size > gameHeight || ball.y < 0) ball.dy *= -1;
 
-        if (
-            (ball.dx < 0 && ball.x < player.x + player.width && ball.y > player.y && ball.y < player.y + player.height) ||
-            (ball.dx > 0 && ball.x + ball.size > opponent.x && ball.y > opponent.y && ball.y < opponent.y + opponent.height)
-        ) {
-            ball.dx *= -1;
-        }
+            if (
+                (ball.dx < 0 && ball.x < player.x + player.width && ball.y > player.y && ball.y < player.y + player.height) ||
+                (ball.dx > 0 && ball.x + ball.size > opponent.x && ball.y > opponent.y && ball.y < opponent.y + opponent.height)
+            ) {
+                ball.dx *= -1;
+            }
 
-        if (ball.x + ball.size < 0) {
-            opponent.score++;
-            // saveScore(currentUser, player.score, opponent.score);
-            resetBall();
-            gamePaused = true; // Pause after score
-            ballServed = false;
-        }
-        if (ball.x > gameWidth) {
-            player.score++;
-            // saveScore(currentUser, player.score, opponent.score);
-            resetBall();
-            gamePaused = true; // Pause after score
-            ballServed = false;
+            if (ball.x + ball.size < 0) {
+                opponent.score++;
+                // saveScore(currentUser, player.score, opponent.score);
+                resetBall();
+                gamePaused = true; // Pause after score
+                ballServed = false;
+            }
+            if (ball.x > gameWidth) {
+                player.score++;
+                // saveScore(currentUser, player.score, opponent.score);
+                resetBall();
+                gamePaused = true; // Pause after score
+                ballServed = false;
+            }
         }
     }
 
